@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TaskFlow · Usuarios</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body data-page="users">
+<div class="app">
+  <div class="main">
+    <main class="content">
+      <div class="page-header">
+        <div>
+          <h1>👥 Gestión de usuarios</h1>
+          <p class="muted">Administra roles y el estado de las cuentas</p>
+        </div>
+        <button class="btn btn-secondary" id="reindex-btn" title="Recrea la colección de Qdrant y regenera los embeddings">🔄 Reindexar vectores (Qdrant)</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Estado</th><th class="hide-sm">Alta</th><th style="text-align:right">Acciones</th></tr></thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="/js/api.js"></script>
+<script src="/js/layout.js"></script>
+<script>
+(() => {
+  if (!TF.auth.isAdmin()) { window.location.href = '/dashboard.html'; return; }
+  const me = TF.auth.user;
+  const rows = document.getElementById('rows');
+
+  async function load() {
+    try {
+      const users = await TF.api.get('/api/admin/users');
+      rows.innerHTML = users.map((u) => `<tr>
+        <td><strong>${TF.esc(u.fullName)}</strong>${u.id === me.id ? ' <span class="badge">Tú</span>' : ''}</td>
+        <td>${TF.esc(u.email)}</td>
+        <td><select data-role="${u.id}" style="width:auto;padding:.25rem .4rem" ${u.id === me.id ? 'disabled' : ''}>
+          <option value="USER" ${u.role === 'USER' ? 'selected' : ''}>Usuario</option>
+          <option value="ADMIN" ${u.role === 'ADMIN' ? 'selected' : ''}>Administrador</option></select></td>
+        <td>${u.active ? '<span class="badge st-COMPLETADA">Activo</span>' : '<span class="badge pr-URGENTE">Desactivado</span>'}</td>
+        <td class="hide-sm">${TF.fmtDateTime(u.createdAt)}</td>
+        <td><div class="actions">${u.id === me.id ? '' : `<button class="btn btn-sm ${u.active ? 'btn-danger' : ''}" data-toggle="${u.id}" data-active="${u.active}">${u.active ? 'Desactivar' : 'Activar'}</button>`}</div></td>
+      </tr>`).join('');
+    } catch (err) { TF.handleError(err); }
+  }
+
+  rows.addEventListener('change', async (e) => {
+    if (!e.target.dataset.role) return;
+    try { await TF.api.put('/api/admin/users/' + e.target.dataset.role, { role: e.target.value }); TF.toast('Rol actualizado', 'success'); }
+    catch (err) { TF.handleError(err); }
+    load();
+  });
+  rows.addEventListener('click', async (e) => {
+    if (!e.target.dataset.toggle) return;
+    const active = e.target.dataset.active !== 'true';
+    try { await TF.api.put('/api/admin/users/' + e.target.dataset.toggle, { active }); TF.toast(active ? 'Usuario activado' : 'Usuario desactivado', 'success'); load(); }
+    catch (err) { TF.handleError(err); }
+  });
+  document.getElementById('reindex-btn').addEventListener('click', async (e) => {
+    if (!TF.confirmAction('Se regenerarán los embeddings de todas las tareas. ¿Continuar?')) return;
+    TF.setLoading(e.target, true, 'Reindexando...');
+    try {
+      const r = await TF.api.post('/api/admin/ai/reindex');
+      TF.toast(`Reindexación completada: ${r.indexed}/${r.total} tareas (${r.failed} fallos)`, r.failed ? 'error' : 'success');
+    } catch (err) { TF.handleError(err); } finally { TF.setLoading(e.target, false); }
+  });
+  load();
+})();
+</script>
+</body>
+</html>

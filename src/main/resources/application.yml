@@ -1,0 +1,88 @@
+server:
+  port: ${SERVER_PORT:8080}
+  error:
+    include-message: always
+
+spring:
+  application:
+    name: taskflow
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/taskflow}
+    username: ${DB_USERNAME:taskflow}
+    password: ${DB_PASSWORD:taskflow}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    time-zone: ${APP_TIMEZONE:America/Bogota}
+
+  # ---------- Spring AI ----------
+  # AI_PROVIDER = openai | ollama  (selecciona el modelo de chat y de embeddings)
+  ai:
+    model:
+      chat: ${AI_PROVIDER:openai}
+      embedding: ${AI_PROVIDER:openai}
+      image: none
+      audio:
+        speech: none
+        transcription: none
+      moderation: none
+    openai:
+      # Si no se define OPENAI_API_KEY, la aplicación arranca igual pero las funciones de IA
+      # devolverán un mensaje claro de "configuración faltante".
+      api-key: ${OPENAI_API_KEY:not-configured}
+      base-url: ${OPENAI_BASE_URL:https://api.openai.com}
+      chat:
+        options:
+          model: ${AI_CHAT_MODEL:gpt-4o-mini}
+          temperature: 0.2
+      embedding:
+        options:
+          model: ${AI_EMBEDDING_MODEL:text-embedding-3-small}
+    ollama:
+      base-url: ${OLLAMA_BASE_URL:http://host.docker.internal:11434}
+      chat:
+        options:
+          model: ${AI_CHAT_MODEL:llama3.1}
+          temperature: 0.2
+      embedding:
+        options:
+          model: ${AI_EMBEDDING_MODEL:nomic-embed-text}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+taskflow:
+  timezone: ${APP_TIMEZONE:America/Bogota}
+  jwt:
+    secret: ${JWT_SECRET:change-me-this-is-a-development-only-secret-key-1234567890}
+    expiration-minutes: ${JWT_EXPIRATION_MINUTES:1440}
+  ai:
+    provider: ${AI_PROVIDER:openai}
+    openai-api-key: ${OPENAI_API_KEY:not-configured}
+    rag-top-k: ${RAG_TOP_K:8}
+    min-score: ${RAG_MIN_SCORE:0.2}
+  qdrant:
+    url: ${QDRANT_URL:http://localhost:6333}
+    api-key: ${QDRANT_API_KEY:}
+    collection: ${QDRANT_COLLECTION:taskflow_tasks}
+  n8n:
+    api-key: ${N8N_API_KEY:change-me-n8n-shared-key}
+    task-assigned-webhook-url: ${N8N_TASK_ASSIGNED_WEBHOOK_URL:http://localhost:5678/webhook/taskflow-task-assigned}
+
+logging:
+  level:
+    com.taskflow: INFO

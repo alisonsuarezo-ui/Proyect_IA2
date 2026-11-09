@@ -1,0 +1,154 @@
+{
+  "id": "tfOverdueAlert01",
+  "name": "TaskFlow - Alerta de tareas atrasadas",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "5793efa4-5f4c-51e7-affd-dbd71f370df3",
+      "name": "Cada hora",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "26617667-22c7-57d1-9fd8-d6c710d16f22",
+      "name": "Ejecutar manualmente",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.TASKFLOW_BASE_URL }}/api/n8n/tasks/overdue",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "={{ $env.TASKFLOW_N8N_API_KEY }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "61002a17-812d-5a36-a993-ce5239f8a763",
+      "name": "Tareas atrasadas",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        260,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "items",
+        "options": {}
+      },
+      "id": "c7cbd59b-afd7-5c34-993a-6525f0d86923",
+      "name": "Separar elementos",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        520,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.TASKFLOW_BASE_URL }}/api/n8n/notifications",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "={{ $env.TASKFLOW_N8N_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ userId: $json.userId, taskId: $json.taskId, type: 'OVERDUE', title: `Tarea atrasada: \"${$json.title}\"`, message: `La tarea #${$json.taskId} \"${$json.title}\" (${$json.projectName}) venció el ${$json.dueDate} y lleva ${$json.daysOverdue} día(s) de retraso. Prioridad: ${$json.priority}.`, dedupKey: $json.dedupKey }) }}",
+        "options": {}
+      },
+      "id": "7a4daf54-8d9d-5d66-a70f-b9d740d98e1a",
+      "name": "Crear alerta en TaskFlow",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        780,
+        100
+      ],
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "Cada hora": {
+      "main": [
+        [
+          {
+            "node": "Tareas atrasadas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tareas atrasadas": {
+      "main": [
+        [
+          {
+            "node": "Separar elementos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Separar elementos": {
+      "main": [
+        [
+          {
+            "node": "Crear alerta en TaskFlow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ejecutar manualmente": {
+      "main": [
+        [
+          {
+            "node": "Tareas atrasadas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "tags": []
+}

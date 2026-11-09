@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TaskFlow · Registro</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+<div class="auth-page">
+  <section class="auth-hero">
+    <div class="brand" style="padding:0"><div class="brand-logo">T</div> TaskFlow</div>
+    <h1>Crea tu cuenta y organiza a tu equipo.</h1>
+    <ul>
+      <li>El primer usuario registrado se convierte en administrador.</li>
+      <li>Invita a tu equipo añadiéndolo como miembro de tus proyectos.</li>
+    </ul>
+  </section>
+  <section class="auth-form-wrap">
+    <div class="auth-card card">
+      <h2>Crear cuenta</h2>
+      <p class="muted">Completa tus datos para empezar</p>
+      <div id="alert"></div>
+      <form id="register-form" novalidate>
+        <div class="form-group">
+          <label for="fullName">Nombre completo</label>
+          <input id="fullName" name="fullName" required maxlength="120">
+        </div>
+        <div class="form-group">
+          <label for="email">Correo electrónico</label>
+          <input id="email" name="email" type="email" required maxlength="160">
+        </div>
+        <div class="form-group">
+          <label for="password">Contraseña (mínimo 8 caracteres)</label>
+          <input id="password" name="password" type="password" required minlength="8">
+        </div>
+        <div class="form-group">
+          <label for="confirm">Confirmar contraseña</label>
+          <input id="confirm" name="confirm" type="password" required minlength="8">
+        </div>
+        <button class="btn btn-block" type="submit" id="submit-btn">Crear cuenta</button>
+      </form>
+      <p class="small muted" style="margin-top:1rem">¿Ya tienes cuenta? <a href="/index.html">Inicia sesión</a></p>
+    </div>
+  </section>
+</div>
+<script src="/js/api.js"></script>
+<script>
+  const form = document.getElementById('register-form');
+  const alertBox = document.getElementById('alert');
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    alertBox.innerHTML = '';
+    if (form.password.value !== form.confirm.value) {
+      alertBox.innerHTML = '<div class="alert alert-error">Las contraseñas no coinciden</div>';
+      return;
+    }
+    const btn = document.getElementById('submit-btn');
+    TF.setLoading(btn, true, 'Creando...');
+    try {
+      const data = await TF.api.post('/api/auth/register', {
+        fullName: form.fullName.value.trim(),
+        email: form.email.value.trim(),
+        password: form.password.value,
+      });
+      TF.auth.save(data);
+      window.location.href = '/dashboard.html';
+    } catch (err) {
+      TF.showFieldErrors(form, err);
+      alertBox.innerHTML = `<div class="alert alert-error">${TF.esc(err.message)}</div>`;
+    } finally {
+      TF.setLoading(btn, false);
+    }
+  });
+</script>
+</body>
+</html>

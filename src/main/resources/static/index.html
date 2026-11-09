@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TaskFlow · Iniciar sesión</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+<div class="auth-page">
+  <section class="auth-hero">
+    <div class="brand" style="padding:0"><div class="brand-logo">T</div> TaskFlow</div>
+    <h1>Gestiona proyectos y tareas con inteligencia.</h1>
+    <ul>
+      <li>Proyectos, tareas, responsables, prioridades y fechas límite.</li>
+      <li>Búsqueda semántica con embeddings y Qdrant.</li>
+      <li>Consultas en lenguaje natural con RAG sobre tus datos reales.</li>
+      <li>Recordatorios y alertas automáticas con n8n.</li>
+    </ul>
+  </section>
+  <section class="auth-form-wrap">
+    <div class="auth-card card">
+      <h2>Iniciar sesión</h2>
+      <p class="muted">Accede con tu cuenta de TaskFlow</p>
+      <div id="alert"></div>
+      <form id="login-form" novalidate>
+        <div class="form-group">
+          <label for="email">Correo electrónico</label>
+          <input id="email" name="email" type="email" autocomplete="email" required>
+        </div>
+        <div class="form-group">
+          <label for="password">Contraseña</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required>
+        </div>
+        <button class="btn btn-block" type="submit" id="submit-btn">Entrar</button>
+      </form>
+      <p class="small muted" style="margin-top:1rem">¿No tienes cuenta? <a href="/register.html">Regístrate</a></p>
+    </div>
+  </section>
+</div>
+<script src="/js/api.js"></script>
+<script>
+  if (TF.auth.token) window.location.href = '/dashboard.html';
+  if (new URLSearchParams(location.search).has('expired')) {
+    document.getElementById('alert').innerHTML = '<div class="alert alert-warning">Tu sesión ha expirado. Vuelve a iniciar sesión.</div>';
+  }
+  const form = document.getElementById('login-form');
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('submit-btn');
+    TF.setLoading(btn, true, 'Entrando...');
+    try {
+      const data = await TF.api.post('/api/auth/login', {
+        email: form.email.value.trim(),
+        password: form.password.value,
+      });
+      TF.auth.save(data);
+      window.location.href = '/dashboard.html';
+    } catch (err) {
+      TF.showFieldErrors(form, err);
+      document.getElementById('alert').innerHTML = `<div class="alert alert-error">${TF.esc(err.message)}</div>`;
+    } finally {
+      TF.setLoading(btn, false);
+    }
+  });
+</script>
+</body>
+</html>

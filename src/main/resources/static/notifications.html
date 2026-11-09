@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TaskFlow · Notificaciones</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body data-page="notifications">
+<div class="app">
+  <div class="main">
+    <main class="content">
+      <div class="page-header">
+        <div>
+          <h1>🔔 Notificaciones</h1>
+          <p class="muted">Asignaciones, recordatorios, alertas de atraso y resúmenes diarios (automatizados con n8n)</p>
+        </div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+          <select id="filter" style="width:auto">
+            <option value="all">Todas</option>
+            <option value="unread">No leídas</option>
+          </select>
+          <button class="btn btn-secondary" id="read-all-btn">Marcar todas como leídas</button>
+        </div>
+      </div>
+      <div class="card" style="padding:0" id="list"></div>
+    </main>
+  </div>
+</div>
+<script src="/js/api.js"></script>
+<script src="/js/layout.js"></script>
+<script>
+(() => {
+  const ICONS = { TASK_ASSIGNED: '📌', DUE_REMINDER: '⏰', OVERDUE: '⚠️', DAILY_SUMMARY: '📋' };
+  const LABELS = { TASK_ASSIGNED: 'Asignación', DUE_REMINDER: 'Recordatorio', OVERDUE: 'Atrasada', DAILY_SUMMARY: 'Resumen diario' };
+  const list = document.getElementById('list');
+  const filter = document.getElementById('filter');
+
+  async function load() {
+    try {
+      const items = await TF.api.get('/api/notifications' + (filter.value === 'unread' ? '?unreadOnly=true' : ''));
+      list.innerHTML = items.length ? items.map((n) => `
+        <div class="notif ${n.read ? '' : 'unread'}">
+          <div class="notif-icon">${ICONS[n.type] || '🔔'}</div>
+          <div class="notif-body">
+            <div class="notif-title">${TF.esc(n.title)}</div>
+            <div class="notif-msg">${TF.esc(n.message || '')}</div>
+            <div class="small muted" style="margin-top:.35rem">
+              <span class="badge">${LABELS[n.type] || n.type}</span>
+              ${TF.fmtDateTime(n.createdAt)} · vía ${TF.esc(n.source === 'N8N' ? 'n8n' : 'backend')}
+              ${n.taskId ? ` · <a href="/task.html?id=${n.taskId}">Ver tarea</a>` : ''}
+            </div>
+          </div>
+          <div class="actions" style="flex-direction:column">
+            ${n.read ? '' : `<button class="btn btn-sm btn-secondary" data-read="${n.id}">Marcar leída</button>`}
+            <button class="btn btn-sm btn-ghost" data-delete="${n.id}">Eliminar</button>
+          </div>
+        </div>`).join('') : '<div class="empty">No tienes notificaciones</div>';
+      window.TFRefreshBadge && window.TFRefreshBadge();
+    } catch (err) { TF.handleError(err); }
+  }
+
+  list.addEventListener('click', async (e) => {
+    try {
+      if (e.target.dataset.read) { await TF.api.patch(`/api/notifications/${e.target.dataset.read}/read`); load(); }
+      if (e.target.dataset.delete) { await TF.api.del(`/api/notifications/${e.target.dataset.delete}`); load(); }
+    } catch (err) { TF.handleError(err); }
+  });
+  document.getElementById('read-all-btn').addEventListener('click', async () => {
+    try { await TF.api.patch('/api/notifications/read-all'); TF.toast('Notificaciones marcadas como leídas', 'success'); load(); }
+    catch (err) { TF.handleError(err); }
+  });
+  filter.addEventListener('change', load);
+  load();
+})();
+</script>
+</body>
+</html>

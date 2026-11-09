@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TaskFlow · Detalle de tarea</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body data-page="tasks">
+<div class="app">
+  <div class="main">
+    <main class="content">
+      <p class="small"><a href="/tasks.html">← Volver a tareas</a></p>
+      <div class="page-header">
+        <div>
+          <h1 id="t-title">Cargando...</h1>
+          <p class="muted" id="t-sub"></p>
+        </div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap" id="t-actions"></div>
+      </div>
+
+      <div class="detail-grid">
+        <div>
+          <div class="card">
+            <h2>Descripción</h2>
+            <div class="description" id="t-description"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h2>💬 Comentarios</h2><span class="badge" id="c-count">0</span></div>
+            <div id="comments"></div>
+            <form id="comment-form" style="margin-top:1rem" novalidate>
+              <div class="form-group">
+                <label for="c-content">Añadir comentario</label>
+                <textarea id="c-content" name="content" maxlength="2000" rows="3" placeholder="Escribe un comentario..."></textarea>
+              </div>
+              <button class="btn" type="submit" id="c-btn">Comentar</button>
+            </form>
+          </div>
+        </div>
+        <div>
+          <div class="card">
+            <h2>Detalles</h2>
+            <dl class="kv" id="t-details"></dl>
+          </div>
+          <div class="card">
+            <div class="card-header"><h2>🔗 Tareas similares</h2></div>
+            <p class="small muted">Calculadas por similitud semántica de embeddings en Qdrant.</p>
+            <div id="similar"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="/js/api.js"></script>
+<script src="/js/layout.js"></script>
+<script src="/js/task-form.js"></script>
+<script src="/js/task-detail.js"></script>
+</body>
+</html>

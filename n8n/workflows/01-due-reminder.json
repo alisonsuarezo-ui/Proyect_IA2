@@ -1,0 +1,154 @@
+{
+  "id": "tfDueReminder001",
+  "name": "TaskFlow - Recordatorio 1 día antes del vencimiento",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "7aed273e-0ec6-5cb0-92c1-d66fa1977840",
+      "name": "Cada hora",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "d07ff1e6-6454-5c92-b8dd-4e3791ad5d25",
+      "name": "Ejecutar manualmente",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.TASKFLOW_BASE_URL }}/api/n8n/tasks/due-tomorrow",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "={{ $env.TASKFLOW_N8N_API_KEY }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "054476bc-a6e0-5343-be6b-1c1bf5a14501",
+      "name": "Tareas que vencen mañana",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        260,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "items",
+        "options": {}
+      },
+      "id": "5eadd20a-4f7f-58ca-9b0b-13b435c2d6e2",
+      "name": "Separar elementos",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        520,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.TASKFLOW_BASE_URL }}/api/n8n/notifications",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "={{ $env.TASKFLOW_N8N_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ userId: $json.userId, taskId: $json.taskId, type: 'DUE_REMINDER', title: `Recordatorio: \"${$json.title}\" vence mañana`, message: `La tarea #${$json.taskId} \"${$json.title}\" del proyecto ${$json.projectName} vence mañana (${$json.dueDate}). Prioridad: ${$json.priority}. Estado actual: ${$json.status}.`, dedupKey: $json.dedupKey }) }}",
+        "options": {}
+      },
+      "id": "b6adc997-1bb6-56e2-a4fb-3e888290ba52",
+      "name": "Crear recordatorio en TaskFlow",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        780,
+        100
+      ],
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "Cada hora": {
+      "main": [
+        [
+          {
+            "node": "Tareas que vencen mañana",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tareas que vencen mañana": {
+      "main": [
+        [
+          {
+            "node": "Separar elementos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Separar elementos": {
+      "main": [
+        [
+          {
+            "node": "Crear recordatorio en TaskFlow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ejecutar manualmente": {
+      "main": [
+        [
+          {
+            "node": "Tareas que vencen mañana",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "tags": []
+}

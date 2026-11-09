@@ -1,0 +1,154 @@
+{
+  "id": "tfDailySummary01",
+  "name": "TaskFlow - Resumen diario de tareas pendientes",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * *"
+            }
+          ]
+        }
+      },
+      "id": "684677e1-ddd5-5c5d-9cd4-317dd9582b7f",
+      "name": "Cada día 08:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "a9127ef7-b280-5157-8221-0353bbfde0fd",
+      "name": "Ejecutar manualmente",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.TASKFLOW_BASE_URL }}/api/n8n/summaries/daily",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "={{ $env.TASKFLOW_N8N_API_KEY }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5204807c-8bf2-5c56-a81c-2f1f29399084",
+      "name": "Resúmenes por usuario",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        260,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "items",
+        "options": {}
+      },
+      "id": "4644f34b-7e89-58d5-935f-c21b812249b1",
+      "name": "Separar elementos",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        520,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.TASKFLOW_BASE_URL }}/api/n8n/notifications",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "={{ $env.TASKFLOW_N8N_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ userId: $json.userId, taskId: null, type: 'DAILY_SUMMARY', title: `Resumen diario ${$json.date}: ${$json.openCount} tarea(s) abiertas`, message: `Hola ${$json.userName}, tienes ${$json.pendingCount} pendiente(s), ${$json.inProgressCount} en progreso, ${$json.overdueCount} atrasada(s) y ${$json.dueTodayCount} que vencen hoy.\\n\\n${$json.taskList}`, dedupKey: $json.dedupKey }) }}",
+        "options": {}
+      },
+      "id": "d11f76be-afd1-5b98-9721-37afe12c49b7",
+      "name": "Crear resumen en TaskFlow",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        780,
+        100
+      ],
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "Cada día 08:00": {
+      "main": [
+        [
+          {
+            "node": "Resúmenes por usuario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resúmenes por usuario": {
+      "main": [
+        [
+          {
+            "node": "Separar elementos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Separar elementos": {
+      "main": [
+        [
+          {
+            "node": "Crear resumen en TaskFlow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ejecutar manualmente": {
+      "main": [
+        [
+          {
+            "node": "Resúmenes por usuario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "tags": []
+}

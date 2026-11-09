@@ -1,0 +1,70 @@
+{
+  "id": "tfTaskAssigned01",
+  "name": "TaskFlow - Notificación de tarea asignada",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "taskflow-task-assigned",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "dd0a5d0e-1a98-5317-9116-3acd8f6bee89",
+      "name": "Webhook tarea asignada",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "dd420be3-b148-5050-bd8a-e758d7f05b5a"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.TASKFLOW_BASE_URL }}/api/n8n/notifications",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "={{ $json.headers['x-api-key'] }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ userId: $json.body.assigneeId, taskId: $json.body.taskId, type: 'TASK_ASSIGNED', title: `Nueva tarea asignada: ${$json.body.taskTitle}`, message: `${$json.body.assignedBy} te asignó la tarea #${$json.body.taskId} \"${$json.body.taskTitle}\" del proyecto ${$json.body.projectName} (prioridad ${$json.body.priority}).${$json.body.dueDate ? ' Fecha límite: ' + $json.body.dueDate + '.' : ''}`, dedupKey: $json.body.dedupKey }) }}",
+        "options": {}
+      },
+      "id": "78e2f797-d165-5855-94ae-31e8cd63b693",
+      "name": "Crear notificación de asignación",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        300,
+        0
+      ],
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "Webhook tarea asignada": {
+      "main": [
+        [
+          {
+            "node": "Crear notificación de asignación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "tags": []
+}

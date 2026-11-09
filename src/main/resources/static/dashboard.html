@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TaskFlow · Dashboard</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body data-page="dashboard">
+<div class="app">
+  <div class="main">
+    <main class="content">
+      <div class="page-header">
+        <div>
+          <h1 id="greeting">Dashboard</h1>
+          <p class="muted">Resumen de tus proyectos y tareas</p>
+        </div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+          <a class="btn btn-secondary" href="/search.html">✨ Preguntar a la IA</a>
+          <a class="btn" href="/tasks.html?new=1">+ Nueva tarea</a>
+        </div>
+      </div>
+
+      <div id="ai-alert"></div>
+
+      <div class="grid grid-4">
+        <div class="card stat accent-primary"><span class="label">Tareas totales</span><span class="value" id="s-total">–</span><span class="small muted" id="s-projects"></span></div>
+        <div class="card stat accent-warning"><span class="label">Pendientes / En progreso</span><span class="value" id="s-open">–</span><span class="small muted" id="s-mine"></span></div>
+        <div class="card stat accent-success"><span class="label">Completadas</span><span class="value" id="s-done">–</span><span class="small muted" id="s-rate"></span></div>
+        <div class="card stat accent-danger"><span class="label">Atrasadas</span><span class="value" id="s-overdue">–</span><span class="small muted" id="s-soon"></span></div>
+      </div>
+
+      <div class="grid grid-2" style="margin-top:1rem">
+        <div class="card">
+          <div class="card-header"><h2>Estado de las tareas</h2></div>
+          <div id="status-bars"></div>
+          <h3 style="margin-top:1.25rem">Abiertas por prioridad</h3>
+          <div id="priority-bars"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h2>Progreso por proyecto</h2><a class="small" href="/projects.html">Ver proyectos</a></div>
+          <div id="project-progress"></div>
+        </div>
+      </div>
+
+      <div class="grid grid-2" style="margin-top:1rem">
+        <div class="card">
+          <div class="card-header"><h2>⚠️ Tareas atrasadas</h2></div>
+          <div class="table-wrap" id="overdue-list"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h2>📅 Próximos 7 días</h2></div>
+          <div class="table-wrap" id="upcoming-list"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="/js/api.js"></script>
+<script src="/js/layout.js"></script>
+<script src="/js/dashboard.js"></script>
+</body>
+</html>

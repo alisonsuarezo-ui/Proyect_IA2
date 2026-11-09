@@ -1,0 +1,5 @@
+target/
+.env
+.git/
+n8n/
+*.md
